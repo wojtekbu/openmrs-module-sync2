@@ -4,6 +4,8 @@ import org.apache.commons.lang.StringUtils;
 import org.apache.commons.lang.exception.ExceptionUtils;
 import org.openmrs.api.context.Context;
 import org.openmrs.module.sync2.SyncModuleConfig;
+import org.openmrs.module.sync2.api.converter.StringToRequestWrapperConverter;
+import org.openmrs.module.sync2.api.model.RequestWrapper;
 import org.openmrs.module.sync2.api.service.SyncAuditService;
 import org.openmrs.module.sync2.api.exceptions.SyncException;
 import org.openmrs.module.sync2.api.model.audit.AuditMessage;
@@ -12,12 +14,17 @@ import org.openmrs.module.sync2.api.model.enums.Operation;
 import org.openmrs.module.sync2.api.model.enums.Resources;
 import org.openmrs.module.sync2.api.model.enums.Status;
 import org.openmrs.module.sync2.api.converter.StringToAuditMessageConverter;
+import org.openmrs.module.sync2.api.service.SyncRequestWrapperService;
+import org.openmrs.module.sync2.client.ClientHelperFactory;
+import org.openmrs.module.sync2.client.RestHttpMessageConverter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
+import org.springframework.http.converter.HttpMessageConverter;
+import org.springframework.http.converter.StringHttpMessageConverter;
 import org.springframework.stereotype.Controller;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -25,6 +32,9 @@ import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.ResponseBody;
+import org.springframework.web.client.RestTemplate;
+
+import java.util.Arrays;
 
 @Controller("sync2.SyncAuditRestController")
 @RequestMapping(value = "/rest/sync2", produces = MediaType.APPLICATION_JSON_VALUE)
@@ -50,6 +60,11 @@ public class SyncAuditRestController {
     
     @Autowired
     private StringToAuditMessageConverter stringToAuditMessageConverter;
+    @Autowired
+    private StringToRequestWrapperConverter stringToRequestWrapperConverter;
+
+    @Autowired
+    private SyncRequestWrapperService syncRequestWrapperService;
 
     @RequestMapping(value = "/messages/{uuid}", method = RequestMethod.GET)
     @ResponseBody
@@ -199,5 +214,65 @@ public class SyncAuditRestController {
                 throw new SyncException(String.format("There is no suitable creatorInstanceId: %s.", enumValue), e);
             }
         }
+    }
+
+    @RequestMapping(value = "/post", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<String> postReqest(@RequestBody String wrapperJson) {
+        RequestWrapper wrapper;
+        try {
+            wrapper = stringToRequestWrapperConverter.convert(wrapperJson);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(INVALID_JSON + "\n"
+                    + ExceptionUtils.getFullStackTrace(ex), HttpStatus.BAD_REQUEST);
+        }
+        LOGGER.debug("Fetched POST wrapped request: {}", wrapper);
+        if (!syncRequestWrapperService.isRequestAuthenticated(wrapper)) return MISSING_PRIVILEGE_RESPONSE;
+        return syncRequestWrapperService.sendPostRequest(wrapper);
+    }
+
+    @RequestMapping(value = "/get", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<String> getRequest(@RequestBody String wrapperJson) {
+        RequestWrapper wrapper;
+        try {
+            wrapper = stringToRequestWrapperConverter.convert(wrapperJson);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(INVALID_JSON + "\n"
+                    + ExceptionUtils.getFullStackTrace(ex), HttpStatus.BAD_REQUEST);
+        }
+        LOGGER.debug("Fetched POST wrapped request: {}", wrapper);
+        if (!syncRequestWrapperService.isRequestAuthenticated(wrapper)) return MISSING_PRIVILEGE_RESPONSE;
+        return syncRequestWrapperService.sendGetRequest(wrapper);
+    }
+
+    @RequestMapping(value = "/put", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<String> putReqest(@RequestBody String wrapperJson) {
+        RequestWrapper wrapper;
+        try {
+            wrapper = stringToRequestWrapperConverter.convert(wrapperJson);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(INVALID_JSON + "\n"
+                    + ExceptionUtils.getFullStackTrace(ex), HttpStatus.BAD_REQUEST);
+        }
+        LOGGER.debug("Fetched POST wrapped request: {}", wrapper);
+        if (!syncRequestWrapperService.isRequestAuthenticated(wrapper)) return MISSING_PRIVILEGE_RESPONSE;
+        return syncRequestWrapperService.sendPutRequest(wrapper);
+    }
+
+    @RequestMapping(value = "/delete", method = RequestMethod.POST)
+    @ResponseBody
+    public ResponseEntity<String> deleteRequest(@RequestBody String wrapperJson) {
+        RequestWrapper wrapper;
+        try {
+            wrapper = stringToRequestWrapperConverter.convert(wrapperJson);
+        } catch (Exception ex) {
+            return new ResponseEntity<>(INVALID_JSON + "\n"
+                    + ExceptionUtils.getFullStackTrace(ex), HttpStatus.BAD_REQUEST);
+        }
+        LOGGER.debug("Fetched POST wrapped request: {}", wrapper);
+        if (!syncRequestWrapperService.isRequestAuthenticated(wrapper)) return MISSING_PRIVILEGE_RESPONSE;
+        return syncRequestWrapperService.sendDeleteRequest(wrapper);
     }
 }

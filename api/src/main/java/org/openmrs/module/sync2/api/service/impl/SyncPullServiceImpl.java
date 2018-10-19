@@ -73,7 +73,7 @@ public class SyncPullServiceImpl implements SyncPullService {
                     && shouldPullObject(pulledObject, category,clientName, localPull);
 
             if (pullToTheLocal) {
-                syncClient.pushData(pulledObject, clientName, localPush, action, CHILD);
+                syncClient.pushData(category, pulledObject, clientName, localPush, action, CHILD);
             }
 
             auditMessage.setSuccess(true);

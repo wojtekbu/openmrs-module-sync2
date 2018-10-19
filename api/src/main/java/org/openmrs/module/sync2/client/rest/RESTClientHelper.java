@@ -74,6 +74,6 @@ public class RESTClientHelper implements ClientHelper {
 	@Override
 	public List<HttpMessageConverter<?>> getCustomFHIRMessageConverter() {
 		return Arrays.asList(new HttpMessageConverter<?>[]
-				{ new RestHttpMessageConverter(), new StringHttpMessageConverter(), new RequestWrapperConverter() });
+				{ new RestHttpMessageConverter(), new StringHttpMessageConverter() });
 	}
 }

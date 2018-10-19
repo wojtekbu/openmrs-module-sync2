@@ -32,7 +32,7 @@ public class RequestWrapperConverter extends AbstractHttpMessageConverter<Reques
 	public RequestWrapperConverter() {
 		super(new MediaType(TYPE, SUBTYPE, Charset.forName(CHARSET)));
 		this.defaultJsonParser = createDefaultGson();
-		this.conversionService = ContextUtils.getConversionService();;
+		this.conversionService = ContextUtils.getConversionService();
 	}
 
 	@Override

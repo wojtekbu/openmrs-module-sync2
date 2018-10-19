@@ -69,7 +69,7 @@ public class SyncPushServiceImpl implements SyncPushService {
                     && shouldPushObject(localObj, category, clientName, parentPull);
 
             if (pushToTheParent) {
-                syncClient.pushData(localObj, clientName, parentPush, action, PARENT);
+                syncClient.pushData(category, localObj, clientName, parentPush, action, PARENT);
             }
 
             auditMessage.setSuccess(true);
